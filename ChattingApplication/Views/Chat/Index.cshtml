@@ -1,0 +1,92 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+<style>
+    .messageList {
+        background: whitesmoke;
+        height: 350px;
+        overflow: auto;
+        border: 1px solid black;
+    }
+    .messageList ul {
+        list-style: none;
+    }
+    .messageList ul li {
+        padding: 5px;
+        border: 1px solid #4682b4;
+        min-height: 35px;
+        margin-left: -40px;
+    }
+</style>
+<h2>Welcome to Chatting App</h2>
+<div class="row">
+    <div class="col-md-8">
+        <div class="messageList" style="height: 350px; overflow: auto;">
+            <ul id="allMessage">
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Active Users</th>
+            </tr>
+            </thead>
+            <tbody id="users">
+                
+            </tbody>
+            
+        </table>
+    </div>
+
+</div>
+<br />
+<div class="row">
+    <div class="col-md-4">
+        <input id="message" class="form-control"/>
+    </div>
+    <button class="btn btn-primary" id="sendmessage">Send</button>
+</div>
+
+
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/Scripts/jquery.signalR-2.4.0.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+        var chat = $.connection.chattingHub;
+        // Start the connection.
+        console.log($.connection);
+        $.connection.hub.start().done(function () {
+            console.log(chat);
+            $('#sendmessage').click(function () {
+                if ($('#message').val().trim() != '') {
+                    // Call the Send method on the hub. 
+                    chat.server.send('@HttpContext.Current.User.Identity.Name', $('#message').val());
+                    // Clear text box and reset focus for next comment. 
+                    $('#message').val('').focus();
+                } else {
+                    alert('Enter Message To Send')
+                }
+            });
+            chat.server.onConnected('@HttpContext.Current.User.Identity.Name');
+        });
+        chat.client.addNewMessageToPage = function (name, message) {
+            // Add the message to the page. >
+            $('#allMessage').append('<li>' + '<span class="btn btn-info btn-sm" style="margin-right:10px;">' + name+ '</span>'  + message + '</li>');
+        };
+       
+        chat.client.AddToActiveUser = function (name) {
+            // Add the message to the page. 
+            $('#users').html('');
+            for (var i = 0; i < name.length; i++) {
+                var item = name[i];
+                $('#users').append('<tr><td>' + item + '</td></tr>');
+            }
+        };
+        
+    </script>
+}
